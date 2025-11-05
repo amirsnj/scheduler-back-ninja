@@ -114,10 +114,39 @@ class TaskServices:
 
     @staticmethod
     def create_task(user_obj, task_data: dict):
-        return Task.objects.create(
+        category_id = task_data.pop("category", None)
+        category_instance = None
+        if category_id:
+            try:
+                category_instance = TaskCategory.objects.get(
+                    id=category_id,
+                    user=user_obj
+                )
+            except TaskCategory.DoesNotExist:
+                raise ValueError(f"Invalid Category ID: {category_id}")
+            
+        task = Task.objects.create(
             user=user_obj,
+            category=category_instance,
             **task_data
         )
+
+        return {
+            "id": task.id,
+            "title": task.title,
+            "description": task.description,
+            "category": task.category.id if task.category else None,
+            "priority_level": task.priority_level,
+            "scheduled_date": task.scheduled_date,
+            "dead_line": task.dead_line,
+            "start_time": task.start_time,
+            "end_time": task.end_time,
+            "is_completed": task.is_completed,
+            "created_at": task.created_at,
+            "updated_at": task.updated_at,
+            "subTasks": [],
+            "tags": []
+        }
 
 
     @staticmethod

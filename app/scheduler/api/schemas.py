@@ -35,7 +35,7 @@ class TaskSchemaIn(Schema):
     description: Optional[str] = ""
     category: Optional[int] = None
     priority_level: PriorityLevel
-    scheduled_date: date
+    scheduled_date: Optional[date] = None
     dead_line: Optional[date] = None
     start_time: Optional[time] = None
     end_time: Optional[time] = None
