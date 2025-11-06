@@ -1,5 +1,4 @@
 from ninja import NinjaAPI
-from ninja.parser import Parser
 from app.authentication.api.routers import router as auth_router
 from app.scheduler.api.routers import router as scheduler_router
 

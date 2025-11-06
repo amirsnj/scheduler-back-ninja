@@ -1,6 +1,6 @@
 from ninja import Router
-from .routes.category_router import router as CategoryRouter
-from .routes.task_router import router as TaskRouter
+from .category.routes import router as CategoryRouter
+from .task.routes import router as TaskRouter
 
 
 

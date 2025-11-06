@@ -5,7 +5,7 @@ from typing import List
 from app.core.exceptions import BadRequestError, NotFoundError
 from app.scheduler.api.schemas import TaskCategorySchema, TaskCategorySchemaIn
 from app.scheduler.models import TaskCategory
-from app.scheduler.services import CategoryServices
+from .services import CategoryServices
 
 
 

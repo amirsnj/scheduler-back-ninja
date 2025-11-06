@@ -1,63 +1,8 @@
-from .models import TaskCategory, Task, SubTask, TaggedItem, Tag
-from django.db import IntegrityError, transaction
-from django.db.models import Prefetch
 from app.scheduler.api.schemas import FullTaskSchemaOut
+from app.scheduler.models import SubTask, Tag, TaggedItem, Task, TaskCategory
+from django.db.models import Prefetch
+from django.db import IntegrityError, transaction
 
-class CategoryServices:
-
-    @staticmethod
-    def get_all_categories(user):
-        return TaskCategory.objects.filter(user=user).values("id", "title")
-    
-
-    @staticmethod
-    def get_catgeory_by_id(user, category_id):
-        try:
-            return TaskCategory.objects.get(
-                pk=category_id,
-                user=user
-            )
-        except TaskCategory.DoesNotExist:
-            return None
-        
-
-    @staticmethod
-    def create_category(user, title: str):
-        try:
-            category = TaskCategory.objects.create(
-                title=title.strip().capitalize(),
-                user=user
-            )
-            
-            return category
-        except IntegrityError:
-            raise ValueError("The category already exists")
-
-
-    @staticmethod
-    def update_category(data_obj, new_data):
-        title = new_data.get("title")
-        try:
-            data_obj.title = title.strip().capitalize()
-            data_obj.save()
-
-            return data_obj
-        except IntegrityError:
-            raise ValueError("The category already exists")
-
-
-    @staticmethod
-    def delete_category(user, id):
-        try:
-            category = TaskCategory.objects.get(
-                pk=id,
-                user=user
-            )
-            category.delete()
-            return True
-        except TaskCategory.DoesNotExist:
-            return False
-        
 
 class TaskServices:
 
@@ -110,6 +55,62 @@ class TaskServices:
         ]
 
         return full_task_data
+    
+
+    @staticmethod
+    def get_task_by_id(user_obj, task_id):
+        try:
+            task = (
+                Task.objects.filter(user=user_obj, pk=task_id)
+                .select_related("category")
+                .prefetch_related(
+                    "subTasks",
+                    Prefetch(
+                        "tagged_items",
+                        queryset=TaggedItem.objects.select_related("tag").filter(tag__user=user_obj),
+                        to_attr="prefetched_tagged_items"
+                    )
+                ).first()
+            )
+
+            if not task:
+                raise ValueError(f"Invalid Task ID: {task_id}")
+
+            tags = [
+                {
+                    "id": tagged_item.tag.id,
+                    "title": tagged_item.tag.title
+                }
+                for tagged_item in task.prefetched_tagged_items
+            ]
+
+            sub_tasks = [
+                {
+                    "id": sub_task.id,
+                    "title": sub_task.title,
+                    "is_completed": sub_task.is_completed
+                }
+                for sub_task in task.subTasks.all()
+            ]
+
+            return {
+                    "id": task.id,
+                    "title": task.title,
+                    "description": task.description,
+                    "category": task.category.id if task.category else None,
+                    "priority_level": task.priority_level,
+                    "scheduled_date": task.scheduled_date,
+                    "dead_line": task.dead_line,
+                    "start_time": task.start_time,
+                    "end_time": task.end_time,
+                    "is_completed": task.is_completed,
+                    "created_at": task.created_at,
+                    "updated_at": task.updated_at,
+                    "subTasks": sub_tasks,
+                    "tags": tags
+                }
+        except Task.DoesNotExist:
+            raise ValueError(f"Invalid Task ID: {task_id}")
     
 
     @staticmethod
