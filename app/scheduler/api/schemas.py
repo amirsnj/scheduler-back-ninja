@@ -39,7 +39,20 @@ class TaskSchemaIn(Schema):
     dead_line: Optional[date] = None
     start_time: Optional[time] = None
     end_time: Optional[time] = None
-    is_completed: bool = False
+    is_completed: Optional[bool] = None
+
+
+class TaskUpdateSchema(Schema):
+    id: Optional[int]
+    title: Optional[str]
+    description: Optional[str]
+    category: Optional[int]
+    priority_level: Optional[PriorityLevel]
+    scheduled_date: Optional[date]
+    dead_line: Optional[date]
+    start_time: Optional[time]
+    end_time: Optional[time]
+    is_completed: Optional[bool]
 
 
 class TaskSchemaOut(TaskSchemaIn):
@@ -59,7 +72,7 @@ class FullTaskSchemaOut(Schema):
     dead_line: Optional[date] = None
     start_time: Optional[time] = None
     end_time: Optional[time] = None
-    is_completed: bool = False
+    is_completed: bool
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
     subTasks: List[SubTaskSchema] = Field(default_factory=list)
