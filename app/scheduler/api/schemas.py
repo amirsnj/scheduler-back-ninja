@@ -19,6 +19,10 @@ class SubTaskSchema(Schema):
     is_completed: bool
 
 
+class TagsSchemaIn(Schema):
+    title: str
+    
+
 class TagsSchemaOut(Schema):
     id: int
     title: str
