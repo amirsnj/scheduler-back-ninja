@@ -8,6 +8,8 @@ django = "*"
 django-ninja = "*"
 djangorestframework-simplejwt = "*"
 orjson = "*"
+python-dotenv = "*"
+psycopg2-binary = "*"
 
 [dev-packages]
 

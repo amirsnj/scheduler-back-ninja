@@ -16,9 +16,9 @@ def get_tags(request):
 
 
 @router.get("/{id}", response=TagsSchemaOut)
-def get_tag(request, tag: int):
+def get_tag(request, id: int):
     try:
-        return TagServices.get_tag_by_id(user_obj=request.auth, tag_id=tag)
+        return TagServices.get_tag_by_id(user_obj=request.auth, tag_id=id)
     except ObjectDoesNotExist as e:
         raise NotFoundError(str(e))
     except Exception as e:
