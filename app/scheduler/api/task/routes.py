@@ -49,9 +49,29 @@ def get_task(request, id:int):
     
 
 @router.put("/{id}", response=FullTaskSchemaOut)
-def update_task(request, id: int, data: TaskUpdateSchema):
+def update_task_put(request, id: int, data: TaskSchemaIn):
     try:
-        return TaskServices.update_task(user_obj=request.auth, new_obj=data.dict(), task_id=id)
+        return TaskServices.update_task(
+            user_obj=request.auth,
+            task_id=id,
+            data=data.model_dump()
+        )
+    
+    except ObjectDoesNotExist as e:
+        raise NotFoundError(str(e))
+    
+    except Exception as e:
+        raise BadRequestError(str(e))
+    
+
+@router.patch("/{id}", response=FullTaskSchemaOut)
+def update_task_patch(request, id: int, data: TaskUpdateSchema):
+    try:
+        return TaskServices.update_task_partial(
+            user_obj=request.auth,
+            task_id=id,
+            data=data.model_dump(exclude_unset=True)
+        )
     
     except ObjectDoesNotExist as e:
         raise NotFoundError(str(e))
@@ -59,4 +79,14 @@ def update_task(request, id: int, data: TaskUpdateSchema):
     except Exception as e:
         raise BadRequestError(str(e))
 
+
+@router.delete("/{id}", response={204: None})
+def delete_task(request, id: int):
+    try: 
+        TaskServices.delete_task(user_obj=request.auth, task_id=id)
+        return 204, None
+    except ObjectDoesNotExist as e:
+        raise NotFoundError(str(e))
+    except Exception as e:
+        raise BadRequestError(str(e))
     

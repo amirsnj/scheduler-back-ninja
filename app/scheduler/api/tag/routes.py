@@ -25,6 +25,15 @@ def get_tag(request, tag: int):
         raise BadRequestError(str(e))
     
 
-@router.post("/", response=TagsSchemaOut)
+@router.post("/", response={201: TagsSchemaOut})
 def add_tag(request, data: TagsSchemaIn):
-    pass
+    try:
+        tag = TagServices.create_tag(
+            user_obj=request.auth,
+            data=data.model_dump()
+        )
+        return 201, tag
+    except Exception as e:
+        raise BadRequestError(str(e))
+    
+

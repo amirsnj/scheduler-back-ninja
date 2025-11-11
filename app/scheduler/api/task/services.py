@@ -1,10 +1,12 @@
 from typing import List
-from app.scheduler.api.schemas import FullTaskSchemaOut
-from app.scheduler.models import SubTask, Tag, TaggedItem, Task, TaskCategory
 from django.db.models import Prefetch, QuerySet
 from django.db import IntegrityError, transaction
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.utils import timezone
 
+from app.scheduler.api.schemas import FullTaskSchemaOut, PriorityLevel
+from app.scheduler.models import SubTask, Tag, TaggedItem, Task, TaskCategory
+from .utils import validate_times, validate_dates
 
 class TaskServices:
 
@@ -31,13 +33,10 @@ class TaskServices:
         category_instance = None
 
         if category_id:
-            try:
-                category_instance = TaskCategory.objects.get(
-                    id=category_id,
-                    user=user_obj
-                )
-            except TaskCategory.DoesNotExist:
-                raise ObjectDoesNotExist(f"Category with ID {category_id}")
+            category_instance = TaskServices._validate_category(
+                user_obj=user_obj,
+                category_id=category_id
+            )
             
         task = Task.objects.create(
             user=user_obj,
@@ -70,13 +69,10 @@ class TaskServices:
                 category_id = task_data.pop('category', None)
                 category_instance = None
                 if category_id:
-                    try:
-                        category_instance = TaskCategory.objects.get(
-                            id=category_id, 
-                            user=user_obj
-                        )
-                    except TaskCategory.DoesNotExist:
-                        raise ObjectDoesNotExist(f"Category with ID {category_id} not found")
+                    category_instance = TaskServices._validate_category(
+                        user_obj=user_obj,
+                        category_id=category_id
+                    )
 
                 # Create the main task
                 task = Task.objects.create(
@@ -126,24 +122,111 @@ class TaskServices:
         
 
     @staticmethod
-    def update_task(user_obj, task_id, new_obj):
-        try:
-            data_obj = Task.objects.get(pk=task_id, user=user_obj)
-
-            for field, value in new_obj.items():
-                if field == "category":
-                    category = TaskCategory.objects.filter(pk=value, user=user_obj).first()
-                    if not category:
-                        raise ObjectDoesNotExist(f"Task Category with ID {value} not found.")
-                    setattr(data_obj, field, category)
-                else:
-                    setattr(data_obj, field, value)
-
-            data_obj.save()
-            return TaskServices._serializer_task_basic(data_obj)
-        
-        except Task.DoesNotExist:
+    def update_task(user_obj, task_id: int, data: dict):
+        task = TaskServices._fetch_tasks(user_obj=user_obj).filter(pk=task_id).first()
+        if not task:
             raise ObjectDoesNotExist(f"Task with ID {task_id} not found")
+        
+        title = data.get("title")
+        if not title:
+            raise ValidationError("Title is required for full update")
+        
+        if len(title.strip()) <= 0:
+            raise ValidationError("Title cannot be empty")
+        
+        priority_level = data.get("priority_level", PriorityLevel.medium)
+        if isinstance(priority_level, PriorityLevel):
+            priority_level = priority_level.value
+
+        category_id = data.get("category")
+        category = None
+        if category_id:
+            category = TaskServices._validate_category(
+                user_obj=user_obj,
+                category_id=category_id
+            )
+
+        scheduled_date = data.get("scheduled_date") or timezone.now().date()
+        dead_line = data.get("dead_line")
+        validate_dates(scheduled_date, dead_line)
+
+        start_time = data.get("start_time")
+        end_time = data.get("end_time")
+        validate_times(start_time, end_time)
+
+
+        task.title = title.strip()
+        task.description = data.get("description", "")
+        task.category = category
+        task.priority_level = priority_level
+        task.scheduled_date = scheduled_date
+        task.dead_line = dead_line
+        task.start_time = start_time
+        task.end_time = end_time
+        task.is_completed = data.get("is_completed", False)
+
+        task.save()
+
+        return TaskServices._serialize_task(task)
+    
+
+    @staticmethod
+    def update_task_partial(user_obj, task_id: int, data: dict):
+        task = TaskServices._fetch_tasks(user_obj=user_obj).filter(pk=task_id).first()
+        if not task:
+            raise ObjectDoesNotExist(f"Task with ID {task_id} not found")
+        
+        for field, value in data.items():
+            if field == "category":
+                value = TaskServices._validate_category(user_obj=user_obj, category_id=value)
+
+            setattr(task, field, value)
+
+        validate_dates(
+            scheduled_date=task.scheduled_date,
+            dead_line=task.dead_line
+        )
+
+        validate_times(
+            start_time=task.start_time,
+            end_time=task.end_time
+        )
+
+        task.save()
+
+        return TaskServices._serialize_task(task)
+
+
+        
+
+    # @staticmethod
+    # def update_task_put(user_obj, task_id, new_obj):
+    #     try:
+    #         data_obj = Task.objects.get(pk=task_id, user=user_obj)
+
+    #         for field, value in new_obj.items():
+    #             if field == "category":
+    #                 category = TaskCategory.objects.filter(pk=value, user=user_obj).first()
+    #                 if not category:
+    #                     raise ObjectDoesNotExist(f"Task Category with ID {value} not found.")
+    #                 setattr(data_obj, field, category)
+    #             else:
+    #                 setattr(data_obj, field, value)
+
+    #         data_obj.save()
+    #         return TaskServices._serializer_task_basic(data_obj)
+        
+    #     except Task.DoesNotExist:
+    #         raise ObjectDoesNotExist(f"Task with ID {task_id} not found")
+        
+
+    @staticmethod
+    def delete_task(user_obj, task_id):
+        task = TaskServices._fetch_tasks(user_obj=user_obj).filter(pk=task_id).first()
+        if not task:
+            raise ObjectDoesNotExist(f"Task with ID {task_id} not found")
+        
+        task.delete()
 
     @staticmethod
     def _fetch_tasks(user_obj) -> QuerySet:
@@ -218,4 +301,12 @@ class TaskServices:
             }
             for tagged_item in tagged_items
         ]
+    
+    @staticmethod
+    def _validate_category(user_obj, category_id):
+        try:
+            category = TaskCategory.objects.get(pk=category_id, user=user_obj)
+            return category
+        except TaskCategory.DoesNotExist:
+            raise ValidationError(f"Category with ID {category_id} not found.")
         

@@ -21,7 +21,7 @@ class SubTaskSchema(Schema):
 
 class TagsSchemaIn(Schema):
     title: str
-    
+
 
 class TagsSchemaOut(Schema):
     id: int
@@ -38,7 +38,19 @@ class TaskSchemaIn(Schema):
     title: str
     description: Optional[str] = ""
     category: Optional[int] = None
-    priority_level: PriorityLevel
+    priority_level: Optional[PriorityLevel] = PriorityLevel.medium
+    scheduled_date: Optional[date] = None
+    dead_line: Optional[date] = None
+    start_time: Optional[time] = None
+    end_time: Optional[time] = None
+    is_completed: Optional[bool] = False
+
+
+class TaskUpdateSchema(Schema):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    category: Optional[int] = None
+    priority_level: Optional[PriorityLevel] = None
     scheduled_date: Optional[date] = None
     dead_line: Optional[date] = None
     start_time: Optional[time] = None
@@ -46,30 +58,10 @@ class TaskSchemaIn(Schema):
     is_completed: Optional[bool] = None
 
 
-class TaskUpdateSchema(Schema):
-    id: Optional[int]
-    title: Optional[str]
-    description: Optional[str]
-    category: Optional[int]
-    priority_level: Optional[PriorityLevel]
-    scheduled_date: Optional[date]
-    dead_line: Optional[date]
-    start_time: Optional[time]
-    end_time: Optional[time]
-    is_completed: Optional[bool]
-
-
-class TaskSchemaOut(TaskSchemaIn):
-    id: int
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
-
-
-
-class FullTaskSchemaOut(Schema):
+class TaskSchemaOut(Schema):
     id: int
     title: str
-    description: Optional[str] = ""
+    description: str
     category: Optional[int] = None
     priority_level: PriorityLevel
     scheduled_date: date
@@ -77,8 +69,12 @@ class FullTaskSchemaOut(Schema):
     start_time: Optional[time] = None
     end_time: Optional[time] = None
     is_completed: bool
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    created_at: datetime
+    updated_at: datetime
+
+
+
+class FullTaskSchemaOut(TaskSchemaOut):
     subTasks: List[SubTaskSchema] = Field(default_factory=list)
     tags: List[TagsSchemaOut] = Field(default_factory=list)
 
@@ -86,18 +82,26 @@ class FullTaskSchemaOut(Schema):
         use_enum_values = True
 
 
-class FullTaskSchemaIn(Schema):
-    title: str
-    description: Optional[str] = ""
-    category: Optional[int] = None
-    priority_level: PriorityLevel = PriorityLevel.medium
-    scheduled_date: Optional[date] = None
-    dead_line: Optional[date] = None
-    start_time: Optional[time] = None
-    end_time: Optional[time] = None
-    is_completed: Optional[bool] = None
+class FullTaskSchemaIn(TaskSchemaIn):
     tags: List[int] = Field(default_factory=list)
     subTasks: List[SubTaskSchema] = Field(default_factory=list)
 
     class Config:
         use_enum_values = True
+
+
+# class FullTaskSchemaIn(Schema):
+#     title: str
+#     description: Optional[str] = ""
+#     category: Optional[int] = None
+#     priority_level: PriorityLevel = PriorityLevel.medium
+#     scheduled_date: Optional[date] = None
+#     dead_line: Optional[date] = None
+#     start_time: Optional[time] = None
+#     end_time: Optional[time] = None
+#     is_completed: Optional[bool] = None
+#     tags: List[int] = Field(default_factory=list)
+#     subTasks: List[SubTaskSchema] = Field(default_factory=list)
+
+#     class Config:
+#         use_enum_values = True

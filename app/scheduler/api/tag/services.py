@@ -1,5 +1,6 @@
 from django.db.models import QuerySet
-from django.core.exceptions import ObjectDoesNotExist
+from django.db.utils import IntegrityError
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 
 from app.scheduler.models import Tag
 
@@ -21,8 +22,21 @@ class TagServices:
         return TagServices._serialize_tags(tag)
     
     @staticmethod
-    def create_tag(user_obj, data):
-        pass
+    def create_tag(user_obj, data: dict):
+        title = data.get("title")
+
+        if not title:
+            raise ValidationError("Title is required field")
+        
+        if len(title) <= 0:
+            raise ValidationError("Title field can not be empty")
+        
+        tag = TagServices._create_tag(
+            user_obj=user_obj,
+            title=title
+        )
+        
+        return TagServices._serialize_tags(tag)
 
 
 
@@ -37,3 +51,14 @@ class TagServices:
             "id": tag.id,
             "title": tag.title
         }
+    
+    @staticmethod
+    def _create_tag(user_obj, title: str):
+        try:
+            return Tag.objects.create(
+                user=user_obj,
+                title=title
+            )
+        except IntegrityError:
+            raise ValidationError(f"The Tag with title {title} already exists for user.")
+    
