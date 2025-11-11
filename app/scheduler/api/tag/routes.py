@@ -37,3 +37,30 @@ def add_tag(request, data: TagsSchemaIn):
         raise BadRequestError(str(e))
     
 
+@router.put("/{id}", response=TagsSchemaOut)
+def update_tag(request, id:int, data: TagsSchemaIn):
+    try:
+        tag = TagServices.update_tag(
+            user_obj=request.auth,
+            tag_id=id,
+            data=data.model_dump()
+        )
+        return tag
+    except ObjectDoesNotExist as e:
+        raise NotFoundError(str(e))
+    except Exception as e:
+        raise BadRequestError(str((e)))
+    
+
+@router.delete("/{id}", response={204: None})
+def delete_tag(request, id: int):
+    try:
+        TagServices.delete_tag(
+            user_obj=request.auth,
+            tag_id=id
+        )
+        return 204, None
+    except ObjectDoesNotExist as e:
+        raise NotFoundError(str(e))
+    except Exception as e:
+        raise BadRequestError(str((e)))

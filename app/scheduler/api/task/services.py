@@ -74,6 +74,15 @@ class TaskServices:
                         category_id=category_id
                     )
 
+                #validate times
+                scheduled_date = task_data.get("scheduled_date") or timezone.now().date()
+                dead_line = task_data.get("dead_line")
+                validate_dates(scheduled_date=scheduled_date, dead_line=dead_line)
+
+                start_time = task_data.get("start_time")
+                end_time = task_data.get("end_time")
+                validate_times(start_time=start_time, end_time=end_time)
+
                 # Create the main task
                 task = Task.objects.create(
                     user=user_obj, 
@@ -196,28 +205,6 @@ class TaskServices:
 
         return TaskServices._serialize_task(task)
 
-
-        
-
-    # @staticmethod
-    # def update_task_put(user_obj, task_id, new_obj):
-    #     try:
-    #         data_obj = Task.objects.get(pk=task_id, user=user_obj)
-
-    #         for field, value in new_obj.items():
-    #             if field == "category":
-    #                 category = TaskCategory.objects.filter(pk=value, user=user_obj).first()
-    #                 if not category:
-    #                     raise ObjectDoesNotExist(f"Task Category with ID {value} not found.")
-    #                 setattr(data_obj, field, category)
-    #             else:
-    #                 setattr(data_obj, field, value)
-
-    #         data_obj.save()
-    #         return TaskServices._serializer_task_basic(data_obj)
-        
-    #     except Task.DoesNotExist:
-    #         raise ObjectDoesNotExist(f"Task with ID {task_id} not found")
         
 
     @staticmethod

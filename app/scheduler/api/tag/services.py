@@ -23,13 +23,7 @@ class TagServices:
     
     @staticmethod
     def create_tag(user_obj, data: dict):
-        title = data.get("title")
-
-        if not title:
-            raise ValidationError("Title is required field")
-        
-        if len(title) <= 0:
-            raise ValidationError("Title field can not be empty")
+        title = TagServices._validate_input_tag(data)
         
         tag = TagServices._create_tag(
             user_obj=user_obj,
@@ -37,8 +31,29 @@ class TagServices:
         )
         
         return TagServices._serialize_tags(tag)
+    
 
+    @staticmethod
+    def update_tag(user_obj, tag_id, data: dict):
+        tag = TagServices._fetch_tags(user_obj).filter(pk=tag_id).first()
 
+        if not tag:
+            raise ObjectDoesNotExist(f"Tag with ID {tag_id} not found")
+        
+        tag.title = TagServices._validate_input_tag(data)
+        tag.save()
+
+        return TagServices._serialize_tags(tag)
+    
+
+    @staticmethod
+    def delete_tag(user_obj, tag_id):
+        tag = TagServices._fetch_tags(user_obj).filter(pk=tag_id).first()
+
+        if not tag:
+            raise ObjectDoesNotExist(f"Tag with ID {tag_id} not found")
+
+        tag.delete()
 
 
     @staticmethod
@@ -62,3 +77,14 @@ class TagServices:
         except IntegrityError:
             raise ValidationError(f"The Tag with title {title} already exists for user.")
     
+    @staticmethod
+    def _validate_input_tag(data: dict):
+        title = data.get("title")
+
+        if not title:
+            raise ValidationError("Title is required field")
+        
+        if len(title) <= 0:
+            raise ValidationError("Title field can not be empty")
+        
+        return title.capitalize()
