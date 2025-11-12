@@ -131,6 +131,88 @@ class TaskServices:
         
 
     @staticmethod
+    def update_full_task(user_obj, task_id: int, data: dict):
+        task = TaskServices._fetch_tasks(user_obj=user_obj).filter(pk=task_id).first()
+        if not task:
+            raise ObjectDoesNotExist(f"Task with ID {task_id} not found")
+
+        tags = data.pop("tags", None)
+        sub_tasks = data.pop("subTasks", None)
+
+        with transaction.atomic():
+
+            for attr, value in data.items():
+                setattr(task, attr, value)
+            task.save()
+
+            if tags is not None:
+                TaskServices.__update_full_task_tags(task=task, new_tags=tags)
+
+            if sub_tasks is not None:
+                TaskServices.__update_full_task_subtasks(task=task, new_subtasks=sub_tasks)
+            
+        return TaskServices._serialize_task(task)
+
+
+    @staticmethod
+    def __update_full_task_tags(task, new_tags):
+        current_tags = set(
+            TaggedItem.objects.filter(task=task).values_list("id", flat=True)
+        )
+        new_tags = set(new_tags)
+
+        tags_to_remove = current_tags - new_tags
+        if tags_to_remove:
+            TaggedItem.objects.filter(tag_id__in=tags_to_remove).delete()
+
+        tags_to_add = new_tags - current_tags
+        if tags_to_add:
+            tagged_items = [
+                TaggedItem(tag_id=tag_id, task=task) for tag_id in tags_to_add
+            ]
+            TaggedItem.objects.bulk_create(tagged_items)
+
+    @staticmethod
+    def __update_full_task_subtasks(task, new_subtasks):
+        current_subtasks = {
+            st.id: st for st in SubTask.objects.filter(parent_task=task)
+        }
+
+        subtasks_to_create = []
+        subtasks_to_update = []
+        updated_ids = set()
+
+        for subtask_data in new_subtasks:
+            subtask_id = subtask_data.get("id")
+
+            if subtask_id and subtask_id in current_subtasks:
+                subtask_instance = current_subtasks[subtask_id]
+                subtask_instance.title = subtask_data.get("title", subtask_instance.title)
+                subtask_instance.is_completed = subtask_data.get("is_completed", subtask_instance.is_completed)
+
+                subtasks_to_update.append(subtask_instance)
+                updated_ids.add(subtask_id)
+            else:
+                subtasks_to_create.append(
+                    SubTask(
+                        parent_task=task,
+                        title=subtask_data.get("title", ""),
+                        is_completed=subtask_data.get("is_completed", False)
+                    )
+                )
+        
+        subtasks_to_delete = set(current_subtasks.keys()) - updated_ids
+        if subtasks_to_delete:
+            SubTask.objects.filter(id__in=subtasks_to_delete).delete()
+
+        if subtasks_to_update:
+            SubTask.objects.bulk_update(subtasks_to_update, ["title", "is_completed"])
+
+        if subtasks_to_create:
+            SubTask.objects.bulk_create(subtasks_to_create)
+
+
+    @staticmethod
     def update_task(user_obj, task_id: int, data: dict):
         task = TaskServices._fetch_tasks(user_obj=user_obj).filter(pk=task_id).first()
         if not task:
