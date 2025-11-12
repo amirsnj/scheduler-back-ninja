@@ -90,3 +90,16 @@ def delete_task(request, id: int):
     except Exception as e:
         raise BadRequestError(str(e))
     
+
+@router.put("/{id}/update", response=FullTaskSchemaOut)
+def full_task_update(request, id: int, data: FullTaskSchemaIn):
+    try:
+        return TaskServices.update_full_task(
+            user_obj=request.auth,
+            task_id=id,
+            data=data.model_dump()
+        )
+    except ObjectDoesNotExist as e:
+        raise NotFoundError(str(e))
+    except Exception as e:
+        raise BadRequestError(str(e))

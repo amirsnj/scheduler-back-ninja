@@ -142,6 +142,8 @@ class TaskServices:
         with transaction.atomic():
 
             for attr, value in data.items():
+                if attr == "category":
+                    value = TaskServices._validate_category(user_obj=user_obj, category_id=value)
                 setattr(task, attr, value)
             task.save()
 
@@ -151,6 +153,7 @@ class TaskServices:
             if sub_tasks is not None:
                 TaskServices.__update_full_task_subtasks(task=task, new_subtasks=sub_tasks)
             
+        task.refresh_from_db()
         return TaskServices._serialize_task(task)
 
 
