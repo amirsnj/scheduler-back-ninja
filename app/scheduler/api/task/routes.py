@@ -7,6 +7,7 @@ from app.authentication.api.auth import JWTAuth
 from app.core.exceptions import BadRequestError, NotFoundError
 from app.scheduler.api.schemas import FullTaskSchemaIn, FullTaskSchemaOut, TaskSchemaIn, TaskUpdateSchema
 from .services import TaskServices
+from django.db import connection
 
 
 router = Router(tags=["Tasks"], auth=JWTAuth())
@@ -14,10 +15,15 @@ router = Router(tags=["Tasks"], auth=JWTAuth())
 
 @router.get("/", response=List[FullTaskSchemaOut])
 def get_all_tasks(request):
-    return TaskServices.get_all_tasks(user_obj=request.auth)
+    tasks = TaskServices.get_all_tasks(user_obj=request.auth)
+    print(f"\033[34mqueries: {len(connection.queries)}\033[0m")
+    for q in connection.queries:
+        print(q["sql"], "\n")
+
+    return tasks
 
 
-@router.post("/full-create", response={201: FullTaskSchemaOut})
+@router.post("/full-create/", response={201: FullTaskSchemaOut})
 def full_task_create(request, data: FullTaskSchemaIn):
     try:
         task = TaskServices.create_full_task(user_obj=request.auth, task_data=data.dict())
@@ -91,7 +97,7 @@ def delete_task(request, id: int):
         raise BadRequestError(str(e))
     
 
-@router.put("/{id}/update", response=FullTaskSchemaOut)
+@router.put("/{id}/update/", response=FullTaskSchemaOut)
 def full_task_update(request, id: int, data: FullTaskSchemaIn):
     try:
         return TaskServices.update_full_task(

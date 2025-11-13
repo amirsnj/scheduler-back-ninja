@@ -32,6 +32,11 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['0.0.0.0 ', 'localhost']
 
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173"
+]
+
 
 # Application definition
 
@@ -45,6 +50,7 @@ INSTALLED_APPS = [
     #third party apps
     'rest_framework',
     'rest_framework_simplejwt',
+    'corsheaders',
     #local apps
     'app.core',
     'app.scheduler'
@@ -52,6 +58,8 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
+    'app.core.middlewares.query_logger.QueryLoggerMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',

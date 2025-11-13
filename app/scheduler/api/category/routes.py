@@ -39,7 +39,7 @@ def create_category(request, data: TaskCategorySchemaIn):
     
 
 @router.put("/{id}", response=TaskCategorySchema)
-def update_category(request, id: int, data: TaskCategorySchema):
+def update_category(request, id: int, data: TaskCategorySchemaIn):
     try:
         category_object = TaskCategory.objects.get(
             pk=id,

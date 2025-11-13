@@ -10,6 +10,7 @@ djangorestframework-simplejwt = "*"
 orjson = "*"
 python-dotenv = "*"
 psycopg2-binary = "*"
+django-cors-headers = "*"
 
 [dev-packages]
 

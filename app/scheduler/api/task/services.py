@@ -154,19 +154,23 @@ class TaskServices:
                 TaskServices.__update_full_task_subtasks(task=task, new_subtasks=sub_tasks)
             
         task.refresh_from_db()
+        if tags is not None:
+            del task.prefetched_tagged_items
+            task.prefetched_tagged_items = list(TaggedItem.objects.select_related("tag").filter(task=task, tag__user=user_obj))
+
         return TaskServices._serialize_task(task)
 
 
     @staticmethod
     def __update_full_task_tags(task, new_tags):
         current_tags = set(
-            TaggedItem.objects.filter(task=task).values_list("id", flat=True)
+            TaggedItem.objects.filter(task=task).values_list("tag_id", flat=True)
         )
         new_tags = set(new_tags)
 
         tags_to_remove = current_tags - new_tags
         if tags_to_remove:
-            TaggedItem.objects.filter(tag_id__in=tags_to_remove).delete()
+            TaggedItem.objects.filter(task=task, tag_id__in=tags_to_remove).delete()
 
         tags_to_add = new_tags - current_tags
         if tags_to_add:
