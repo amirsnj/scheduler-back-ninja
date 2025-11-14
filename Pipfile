@@ -12,6 +12,10 @@ python-dotenv = "*"
 psycopg2-binary = "*"
 django-cors-headers = "*"
 astral = "*"
+anydi-django = {extras = ["ninja"], version = "*"}
+whitenoise = "*"
+gunicorn = "*"
+uvicorn = "*"
 
 [dev-packages]
 
