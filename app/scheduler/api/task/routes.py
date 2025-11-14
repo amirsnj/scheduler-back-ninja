@@ -28,7 +28,7 @@ def full_task_create(request, data: FullTaskSchemaIn):
         task = TaskServices.create_full_task(user_obj=request.auth, task_data=data.model_dump())
         return 201, task
     except ValueError as e:
-        raise BadRequestError(str(e))
+        raise BadRequestError(f'haha {str(e)}')
     except Exception as e:
         # Log the error
         raise BadRequestError("Failed to create task")

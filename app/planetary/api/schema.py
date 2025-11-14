@@ -1,4 +1,4 @@
-from datetime import time
+from datetime import datetime
 from typing import Optional
 from ninja import Schema, FilterSchema
 
@@ -6,12 +6,12 @@ from ninja import Schema, FilterSchema
 class PlanetHoursSchema(Schema):
     hour: int
     planet: str
-    start_time: time
-    end_time: time
+    start_time: datetime
+    end_time: datetime
 
 
 class PlanetRequestQuerySchema(FilterSchema):
-    lat: int
-    lon: int
+    lat: float
+    lon: float
     city: str
     date: Optional[str] = None

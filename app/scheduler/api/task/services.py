@@ -147,7 +147,7 @@ class TaskServices:
 
     @staticmethod
     def update_full_task(user_obj, task_id: int, data: dict):
-        task = TaskServices._fetch_tasks(user_obj=user_obj).filter(pk=task_id).first()
+        task: Task = TaskServices._fetch_tasks(user_obj=user_obj).filter(pk=task_id).first()
         if not task:
             raise ObjectDoesNotExist(f"Task with ID {task_id} not found")
 
@@ -155,6 +155,19 @@ class TaskServices:
         sub_tasks = data.pop("subTasks", None)
 
         with transaction.atomic():
+
+            scheduled_date = data.pop("scheduled_date") or timezone.now().date()
+            dead_line = data.pop("dead_line")
+            validate_dates(scheduled_date, dead_line)
+
+            start_time = data.pop("start_time")
+            end_time = data.pop("end_time")
+            validate_times(start_time, end_time)
+
+            task.scheduled_date = scheduled_date
+            task.dead_line = dead_line
+            task.start_time = start_time
+            task.end_time = end_time
 
             for attr, value in data.items():
                 if attr == "category" and value is not None:
