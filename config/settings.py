@@ -33,7 +33,7 @@ DEBUG = os.getenv("DEBUG", False)
 
 ALLOWED_HOSTS = ["*"]
 
-CORS_ALLOWED_ORIGINS = ["https://scheduler-site.liara.run"]
+CORS_ALLOWED_ORIGINS = ["https://scheduler-site.liara.run", "http://localhost:5173", "http://127.0.0.1:5173"]
 
 
 # Application definition
