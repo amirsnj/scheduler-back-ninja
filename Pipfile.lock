@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "a1801069c9a9311371eefffc4339a6a8222eca85dcb16752db13d5430a27ddef"
+            "sha256": "957793132d718019d1b2577cd4dadf08bbcae69db7c6f60571e9b4e2b584fc56"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -31,6 +31,15 @@
             ],
             "markers": "python_version >= '3.9'",
             "version": "==3.10.0"
+        },
+        "astral": {
+            "hashes": [
+                "sha256:9b7c3b412e9e69d172cfb24be0e6addcc9f1bd01a28db8bebe66d75ccc533d88",
+                "sha256:cb7b49a3f0d4c64ae666be131276d2a3226134c598db10e672028cf8ff855f83"
+            ],
+            "index": "pypi",
+            "markers": "python_version >= '3.7' and python_version < '4.0'",
+            "version": "==3.2"
         },
         "django": {
             "hashes": [

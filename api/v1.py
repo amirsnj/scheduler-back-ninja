@@ -1,6 +1,7 @@
 from ninja import NinjaAPI
 from app.authentication.api.routers import router as auth_router
 from app.scheduler.api.routers import router as scheduler_router
+from app.planetary.api.api import router as planetary_router
 
 
 api = NinjaAPI(
@@ -11,3 +12,4 @@ api = NinjaAPI(
 
 api.add_router("/auth", auth_router)
 api.add_router("/schedule", scheduler_router)
+api.add_router("/planetary", planetary_router)

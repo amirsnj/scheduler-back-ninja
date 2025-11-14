@@ -53,7 +53,8 @@ INSTALLED_APPS = [
     'corsheaders',
     #local apps
     'app.core',
-    'app.scheduler'
+    'app.scheduler',
+    'app.planetary'
 ]
 
 MIDDLEWARE = [

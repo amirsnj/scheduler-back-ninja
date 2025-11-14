@@ -1,5 +1,6 @@
 from typing import List
-from django.db.models import Prefetch, QuerySet
+from datetime import timedelta
+from django.db.models import Prefetch, QuerySet, Q
 from django.db import IntegrityError, transaction
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.utils import timezone
@@ -11,9 +12,22 @@ from .utils import validate_times, validate_dates
 class TaskServices:
 
     @staticmethod
-    def get_all_tasks(user_obj):
-        tasks = TaskServices._fetch_tasks(user_obj)
-        return [TaskServices._serialize_task(task) for task in tasks]
+    def get_all_tasks(user_obj, scheduled_date=None):
+        queryset = TaskServices._fetch_tasks(user_obj)
+
+        if scheduled_date:
+            queryset = queryset.filter(scheduled_date=scheduled_date)
+        else:
+            today = timezone.now().date()
+            queryset = queryset.filter(
+                Q(scheduled_date__range=[today, today + timedelta(days=5)])
+                | Q(
+                    scheduled_date__lt=today,
+                    dead_line__gte=today
+                )
+            )
+
+        return [TaskServices._serialize_task(task) for task in queryset]
     
 
     @staticmethod
@@ -75,7 +89,7 @@ class TaskServices:
                     )
 
                 #validate times
-                scheduled_date = task_data.get("scheduled_date") or timezone.now().date()
+                scheduled_date = task_data.pop("scheduled_date") or timezone.now().date()
                 dead_line = task_data.get("dead_line")
                 validate_dates(scheduled_date=scheduled_date, dead_line=dead_line)
 
@@ -87,6 +101,7 @@ class TaskServices:
                 task = Task.objects.create(
                     user=user_obj, 
                     category=category_instance,
+                    scheduled_date=scheduled_date,
                     **task_data
                 )
 
@@ -142,7 +157,7 @@ class TaskServices:
         with transaction.atomic():
 
             for attr, value in data.items():
-                if attr == "category":
+                if attr == "category" and value is not None:
                     value = TaskServices._validate_category(user_obj=user_obj, category_id=value)
                 setattr(task, attr, value)
             task.save()
@@ -275,7 +290,7 @@ class TaskServices:
             raise ObjectDoesNotExist(f"Task with ID {task_id} not found")
         
         for field, value in data.items():
-            if field == "category":
+            if field == "category" and value is not None:
                 value = TaskServices._validate_category(user_obj=user_obj, category_id=value)
 
             setattr(task, field, value)

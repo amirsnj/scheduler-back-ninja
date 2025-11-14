@@ -88,20 +88,3 @@ class FullTaskSchemaIn(TaskSchemaIn):
 
     class Config:
         use_enum_values = True
-
-
-# class FullTaskSchemaIn(Schema):
-#     title: str
-#     description: Optional[str] = ""
-#     category: Optional[int] = None
-#     priority_level: PriorityLevel = PriorityLevel.medium
-#     scheduled_date: Optional[date] = None
-#     dead_line: Optional[date] = None
-#     start_time: Optional[time] = None
-#     end_time: Optional[time] = None
-#     is_completed: Optional[bool] = None
-#     tags: List[int] = Field(default_factory=list)
-#     subTasks: List[SubTaskSchema] = Field(default_factory=list)
-
-#     class Config:
-#         use_enum_values = True

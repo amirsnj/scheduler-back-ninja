@@ -18,7 +18,7 @@ def get_categories(request):
     return categories
 
 
-@router.get("/{id}", response=TaskCategorySchema)
+@router.get("/{id}/", response=TaskCategorySchema)
 def get_category(request, id: int):
     category = CategoryServices.get_catgeory_by_id(request.auth, id)
     if not category:
@@ -38,7 +38,7 @@ def create_category(request, data: TaskCategorySchemaIn):
         raise BadRequestError(str(e))
     
 
-@router.put("/{id}", response=TaskCategorySchema)
+@router.put("/{id}/", response=TaskCategorySchema)
 def update_category(request, id: int, data: TaskCategorySchemaIn):
     try:
         category_object = TaskCategory.objects.get(
@@ -56,7 +56,7 @@ def update_category(request, id: int, data: TaskCategorySchemaIn):
         raise BadRequestError(str(e))
     
 
-@router.delete("/{id}", response={204: None})
+@router.delete("/{id}/", response={204: None})
 def delete_cateogry(request, id: int):
     result = CategoryServices.delete_category(
         user=request.auth,

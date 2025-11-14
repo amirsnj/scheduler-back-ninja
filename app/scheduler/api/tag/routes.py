@@ -15,7 +15,7 @@ def get_tags(request):
     return TagServices.get_all_tags(user_obj=request.auth)
 
 
-@router.get("/{id}", response=TagsSchemaOut)
+@router.get("/{id}/", response=TagsSchemaOut)
 def get_tag(request, id: int):
     try:
         return TagServices.get_tag_by_id(user_obj=request.auth, tag_id=id)
@@ -37,7 +37,7 @@ def add_tag(request, data: TagsSchemaIn):
         raise BadRequestError(str(e))
     
 
-@router.put("/{id}", response=TagsSchemaOut)
+@router.put("/{id}/", response=TagsSchemaOut)
 def update_tag(request, id:int, data: TagsSchemaIn):
     try:
         tag = TagServices.update_tag(
@@ -52,7 +52,7 @@ def update_tag(request, id:int, data: TagsSchemaIn):
         raise BadRequestError(str((e)))
     
 
-@router.delete("/{id}", response={204: None})
+@router.delete("/{id}/", response={204: None})
 def delete_tag(request, id: int):
     try:
         TagServices.delete_tag(
